@@ -7,7 +7,7 @@ library(expm)
 
 #function to simulate p A matrices of dimension m
 #elements of each A matrix are randomly generated using independent normal distributions
-A_matrix_simulation=function(m,p, factor = 0.1){
+A_matrix_simulation=function(m,p, factor = 1){
     A_mats=list()
     for(j in 1:p){
       A_mats[[j]]=matrix(rnorm(m^2,0,1),nrow=m,ncol=m)*factor
