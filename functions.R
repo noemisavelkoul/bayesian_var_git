@@ -172,18 +172,196 @@ simulate_VAR = function(N, phi, Sigma, mu=rep(0, nrow(Sigma)), Gamma) {
 }
 
 #generate a stationary VAR process and return model parameters and time series
-generate_data_set = function(N, m, p, Sigma, mu) {
+
+# generate_data_set = function(N, m, p, Sigma, mu) {
+#   A = A_matrix_simulation(m, p)
+#   P = A_to_P(A, p, m)
+#   print(P)
+#   phiGamma = P_to_phi(Sigma, P, m, p)
+#   phi = phiGamma[[1]]
+#   Gamma = phiGamma[[2]]
+# 
+#   y = simulate_VAR(N, phi, Sigma, mu, Gamma)
+#   y$A = A
+#   y$P = P
+#   
+#   return(y)
+# }
+
+generate_data_set <- function(N, m, p, Sigma, mu) {
+  A <- A_matrix_simulation(m, p)
+  P <- A_to_P(A, p, m)
+  print(P)
+  phiGamma <- P_to_phi(Sigma, P, m, p)
+  phi <- phiGamma[[1]]
+  Gamma <- phiGamma[[2]]
+  
+  y <- simulate_VAR(N, phi, Sigma, mu, Gamma)
+  y$A <- A
+  y$P <- P
+  
+  # Creating the parameter_names and parameter_values data frame
+  parameter_names <- c()
+  parameter_values <- c()
+  
+  # Loop through elements of A to create parameter names and values
+  for (i in 1:length(A)) {
+    for (j in 1:length(A[[i]])) {
+      param_name <- paste0("A[", i, ",", j, ",1]")
+      param_value <- A[[i]][[j]][1]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of P to create parameter names and values
+  for (i in 1:length(P)) {
+    for (j in 1:length(P[[i]])) {
+      param_name <- paste0("P[", i, ",", j, ",1]")
+      param_value <- P[[i]][[j]][1]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of phi to create parameter names and values
+  for (i in 1:length(phi)) {
+    for (j in 1:length(phi[[i]])) {
+      param_name <- paste0("phi[", i, ",", j, "]")
+      param_value <- phi[[i]][[j]]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of Gamma to create parameter names and values
+  for (i in 1:length(Gamma)) {
+    for (j in 1:length(Gamma[[i]])) {
+      param_name <- paste0("Gamma[", i, ",", j, "]")
+      param_value <- Gamma[[i]][[j]]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of mu to create parameter names and values
+  for (i in 1:length(mu)) {
+    param_name <- paste0("mu[", i, "]")
+    param_value <- mu[i]
+    parameter_names <- c(parameter_names, param_name)
+    parameter_values <- c(parameter_values, param_value)
+  }
+  
+  # Loop through elements of Sigma to create parameter names and values
+  for (i in 1:nrow(Sigma)) {
+    for (j in 1:ncol(Sigma)) {
+      param_name <- paste0("Sigma[", i, ",", j, "]")
+      param_value <- Sigma[i, j]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  df <- data.frame(parameter_names = parameter_names, parameter_values = parameter_values)
+  
+  return(list(y=y, df=df))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+generate_data_set <- function(N, m, p, Sigma, mu) {
+  
   A = A_matrix_simulation(m, p)
   P = A_to_P(A, p, m)
+  print(P)
   phiGamma = P_to_phi(Sigma, P, m, p)
   phi = phiGamma[[1]]
   Gamma = phiGamma[[2]]
-
+  
   y = simulate_VAR(N, phi, Sigma, mu, Gamma)
   y$A = A
   y$P = P
-  return(y)
+  
+  # Creating the parameter_names and parameter_values data frame
+  parameter_names <- c()
+  parameter_values <- c()
+  
+  # Loop through elements of A to create parameter names and values
+  for (i in 1:length(A)) {
+    for (j in 1:length(A[[i]])) {
+      param_name <- paste0("A[", i, ",", j, ",1]")
+      param_value <- A[[i]][[j]][1]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of P to create parameter names and values
+  for (i in 1:length(P)) {
+    for (j in 1:length(P[[i]])) {
+      param_name <- paste0("P[", i, ",", j, ",1]")
+      param_value <- P[[i]][[j]][1]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of phi to create parameter names and values
+  for (i in 1:length(phi)) {
+    for (j in 1:length(phi[[i]])) {
+      param_name <- paste0("phi[", i, ",", j, "]")
+      param_value <- phi[[i]][[j]]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of Gamma to create parameter names and values
+  for (i in 1:length(Gamma)) {
+    for (j in 1:length(Gamma[[i]])) {
+      param_name <- paste0("Gamma[", i, ",", j, "]")
+      param_value <- Gamma[[i]][[j]]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  # Loop through elements of mu to create parameter names and values
+  for (i in 1:length(mu)) {
+    param_name <- paste0("mu[", i, "]")
+    param_value <- mu[i]
+    parameter_names <- c(parameter_names, param_name)
+    parameter_values <- c(parameter_values, param_value)
+  }
+  
+  # Loop through elements of Sigma to create parameter names and values
+  for (i in 1:nrow(Sigma)) {
+    for (j in 1:ncol(Sigma)) {
+      param_name <- paste0("Sigma[", i, ",", j, "]")
+      param_value <- Sigma[i, j]
+      parameter_names <- c(parameter_names, param_name)
+      parameter_values <- c(parameter_values, param_value)
+    }
+  }
+  
+  df <- data.frame(parameter_names = parameter_names, parameter_values = parameter_values)
+  
+  return(list(df = df, y = y))
 }
+
 
 #calculate the threshold for the truncation criteria
 calculate_threshold = function(m, N, beta) {

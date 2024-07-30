@@ -1,7 +1,7 @@
 #Functions to generate data, calculate truncation threshold and calculate posterior for
 #effective order
 
-my_path = "/Users/noemisavelkoul/Desktop/bayesian_var" # path to directory containing R code and Stan program,
+my_path = "/Users/noemisavelkoul/Desktop/bayesian_var_git" # path to directory containing R code and Stan program,
 # starting in current working directory
 source(paste(my_path, "/functions.R", sep=""))
 
@@ -13,12 +13,12 @@ library(stringr)
 # ==== GENERATE DATA ====
 
 # Define parameters
-num_pmf <- 10  # Number of posterior mass functions to generate
+num_pmf <- 1  # Number of posterior mass functions to generate
 N <- 1000  # Number of observations, change this value as needed
 
 # Define possible values for m and p based on the paper
-m_values <- c(1, 3, 5, 7)
-p_values <- c(7, 12, 30)
+m_values <- c(1)
+p_values <- c(4)
 
 # Create data directory if it does not exist
 output_folder <- "data"
@@ -52,6 +52,37 @@ for (m in m_values) {
 }
 
 
+for (m in m_values) {
+  for (p in p_values) {
+    
+    # Create new Excel workbooks for y data and df data
+    wb_y <- createWorkbook()
+    wb_df <- createWorkbook()
+    
+    for (i in 1:num_pmf) {
+      experiment <- i 
+      
+      # Define parameters for data generation > original is mu = 0, Sigma = I
+      Sigma <- diag(1, m)
+      mu <- rep(0, m)
+      
+      data <- generate_data_set(N = N, m = m, p = p, Sigma = Sigma, mu = mu)
+      # Save the y dataset to the y Excel workbook
+      addWorksheet(wb_y, paste0("Dataset_", i))
+      writeData(wb_y, sheet = paste0("Dataset_", i), data$y$y)
+      print(data$y)
+  
+      # Save the df dataset to the df Excel workbook
+      addWorksheet(wb_df, paste0("Parameters_", i))
+      writeData(wb_df, sheet = paste0("Parameters_", i), data$df)
+    }
+    
+    # Save the workbooks to files
+    saveWorkbook(wb_y, file.path(output_folder, paste0("Data_m_", m, "_p_", p, ".xlsx")), overwrite = TRUE)
+    saveWorkbook(wb_df, file.path(output_folder, paste0("Parameters_m_", m, "_p_", p, ".xlsx")), overwrite = TRUE)
+  }
+}
+
 # ==== RUN SIMULATION ====
 
 library(openxlsx)
@@ -60,11 +91,11 @@ library(stringr)
 library(tictoc)
 
 # Define possible values for m and p based on the paper
-m_values <- c(1, 3, 5, 7)
-p_values <- c(7, 12, 30)
+m_values <- c(1)
+p_values <- c(3)
 
 # Define the number of PMFs (adjust according to your data)
-num_pmf <- 10
+num_pmf <- 1
 
 # Function to calculate and print elapsed time
 print_time <- function(start_time, prefix = "") {
@@ -108,16 +139,18 @@ for (m in m_values) {
       file <- paste0(my_path, "/multiplicative_gamma.stan")
       mod <- cmdstan_model(file)
       
-      p_max <- p + 4 
+      p_max <- 8 
       
-      data <- list(m = m, p = p_max, N = N, y = y, n_miss = 0, ind_miss = c(), df = m + 4, scale_diag = 1, scale_offdiag = 0, a1 = 2.5, a2 = 3, a = 6)
+      data <- list(m = m, p = p_max, N = N, y = y, n_miss = 0, ind_miss = c(), df = m + 4, scale_diag = 1, scale_offdiag = 0, a1 = 0.001, a2 = 1.001, a = 6)
       
       # Run HMC with 4 chains on 4 parallel cores, with 1000 iterations of warmup and 4000 sampling iterations
-      output <- mod$sample(data = data, chains = 4, parallel_chains = 4, iter_warmup = 1000, iter_sampling = 4000)
+      output <- mod$sample(data = data, chains = 4, parallel_chains = 4, iter_warmup = 1, iter_sampling = 5, save_warmup = TRUE)
       
       # Extract MCMC output as 3-dimensional array of form: [iterations, chains, parameters]
       draws_arr <- output$draws()
       draws_arr <- unclass(draws_arr)
+      draws_arr_wu <- output$draws(inc_warmup = TRUE)
+      draws_arr_wu <- unclass(draws_arr_wu)
       
       # Extract samples of P matrices
       nchains <- 4
@@ -143,7 +176,7 @@ for (m in m_values) {
     pmf_data <- data.frame(k = 0:p_max)
     for (I in 1:num_pmf) {
       pmf_data[[paste0("probability_", I)]] <- pmf_list[[I]]
-    }
+    } 
     
     # Define the path to save the PMF data
     save_path <- paste0("/Users/noemisavelkoul/Desktop/bayesian_var_git/probabilities/pmf_data_m", m, "_p", p, ".RData")
@@ -158,3 +191,4 @@ for (m in m_values) {
 
 # Print overall elapsed time
 print_time(overall_start, prefix = "Overall -")
+
